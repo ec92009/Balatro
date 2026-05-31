@@ -1,93 +1,308 @@
 const suits = [
-  { symbol: "♠", color: "black" },
-  { symbol: "♥", color: "red" },
-  { symbol: "♦", color: "red" },
-  { symbol: "♣", color: "black" },
+  { symbol: "♠", key: "spades", color: "black" },
+  { symbol: "♥", key: "hearts", color: "red" },
+  { symbol: "♦", key: "diamonds", color: "red" },
+  { symbol: "♣", key: "clubs", color: "black" },
 ];
 
-const ranks = ["A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2"];
+const ranks = [
+  { label: "A", value: 14, chips: 11 },
+  { label: "K", value: 13, chips: 10 },
+  { label: "Q", value: 12, chips: 10 },
+  { label: "J", value: 11, chips: 10 },
+  { label: "10", value: 10, chips: 10 },
+  { label: "9", value: 9, chips: 9 },
+  { label: "8", value: 8, chips: 8 },
+  { label: "7", value: 7, chips: 7 },
+  { label: "6", value: 6, chips: 6 },
+  { label: "5", value: 5, chips: 5 },
+  { label: "4", value: 4, chips: 4 },
+  { label: "3", value: 3, chips: 3 },
+  { label: "2", value: 2, chips: 2 },
+];
 
-const cardsElement = document.querySelector("#cards");
-const dealButton = document.querySelector("#deal-button");
-const scoreButton = document.querySelector("#score-button");
-const handNameElement = document.querySelector("#hand-name");
-const scoreElement = document.querySelector("#score");
+const handScores = {
+  "Royal Flush": [120, 10],
+  "Straight Flush": [100, 8],
+  "Four of a Kind": [60, 7],
+  "Full House": [40, 4],
+  Flush: [35, 4],
+  Straight: [30, 4],
+  "Three of a Kind": [30, 3],
+  "Two Pair": [20, 2],
+  Pair: [10, 2],
+  "High Card": [5, 1],
+};
 
-let currentHand = [];
+const jokerPool = [
+  { name: "Chip Stack", cost: 4, text: "+35 chips", apply: (score) => ({ ...score, chips: score.chips + 35 }) },
+  { name: "Loud Jacket", cost: 5, text: "+3 mult", apply: (score) => ({ ...score, mult: score.mult + 3 }) },
+  { name: "Flush Fund", cost: 6, text: "Flushes earn +$2", payout: (hand) => (hand.name.includes("Flush") ? 2 : 0) },
+  { name: "Pair Press", cost: 4, text: "Pairs gain +4 mult", apply: (score) => (score.name.includes("Pair") ? { ...score, mult: score.mult + 4 } : score) },
+  { name: "Face Value", cost: 5, text: "+5 chips per face card", apply: (score, cards) => ({ ...score, chips: score.chips + cards.filter((card) => card.value >= 11).length * 5 }) },
+  { name: "Lucky Seven", cost: 3, text: "+77 chips if a 7 is scored", apply: (score, cards) => (cards.some((card) => card.value === 7) ? { ...score, chips: score.chips + 77 } : score) },
+];
+
+const els = {
+  ante: document.querySelector("#ante"),
+  round: document.querySelector("#round"),
+  target: document.querySelector("#target"),
+  score: document.querySelector("#score"),
+  hands: document.querySelector("#hands"),
+  discards: document.querySelector("#discards"),
+  cash: document.querySelector("#cash"),
+  result: document.querySelector("#result"),
+  hand: document.querySelector("#hand"),
+  jokers: document.querySelector("#jokers"),
+  shopPanel: document.querySelector("#shop-panel"),
+  shop: document.querySelector("#shop"),
+  play: document.querySelector("#play"),
+  discard: document.querySelector("#discard"),
+  nextRound: document.querySelector("#next-round"),
+  newRun: document.querySelector("#new-run"),
+};
+
+let state;
+
+function newRun() {
+  state = {
+    ante: 1,
+    round: 1,
+    target: 240,
+    score: 0,
+    hands: 4,
+    discards: 3,
+    cash: 4,
+    deck: shuffle(buildDeck()),
+    hand: [],
+    selected: new Set(),
+    jokers: [],
+    shop: [],
+    mode: "playing",
+  };
+  drawTo(8);
+  render("Select up to five cards, then play or discard.");
+}
 
 function buildDeck() {
-  return suits.flatMap((suit) => ranks.map((rank) => ({ rank, ...suit })));
+  return suits.flatMap((suit) =>
+    ranks.map((rank) => ({
+      id: `${rank.label}-${suit.key}`,
+      ...rank,
+      suit: suit.key,
+      symbol: suit.symbol,
+      color: suit.color,
+    })),
+  );
 }
 
-function dealHand() {
-  const deck = buildDeck();
-  currentHand = [];
-
-  while (currentHand.length < 5) {
-    const index = Math.floor(Math.random() * deck.length);
-    currentHand.push(deck.splice(index, 1)[0]);
+function shuffle(cards) {
+  const deck = [...cards];
+  for (let i = deck.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [deck[i], deck[j]] = [deck[j], deck[i]];
   }
-
-  renderHand();
-  scoreElement.textContent = "0";
-  handNameElement.textContent = "Ready";
+  return deck;
 }
 
-function scoreHand() {
-  const rankCounts = currentHand.reduce((counts, card) => {
-    counts.set(card.rank, (counts.get(card.rank) || 0) + 1);
-    return counts;
-  }, new Map());
-
-  const groups = [...rankCounts.values()].sort((a, b) => b - a);
-  const score = currentHand.reduce((total, card) => total + rankValue(card.rank), 0);
-  const handName = nameHand(groups);
-
-  handNameElement.textContent = handName;
-  scoreElement.textContent = String(score * multiplierFor(handName));
+function drawTo(size) {
+  while (state.hand.length < size && state.deck.length) {
+    state.hand.push(state.deck.pop());
+  }
 }
 
-function rankValue(rank) {
-  if (rank === "A") return 11;
-  if (["K", "Q", "J"].includes(rank)) return 10;
-  return Number(rank);
+function toggleCard(id) {
+  if (state.mode !== "playing") return;
+  if (state.selected.has(id)) {
+    state.selected.delete(id);
+  } else if (state.selected.size < 5) {
+    state.selected.add(id);
+  }
+  render();
 }
 
-function nameHand(groups) {
-  if (groups[0] === 4) return "Four of a Kind";
-  if (groups[0] === 3 && groups[1] === 2) return "Full House";
-  if (groups[0] === 3) return "Three of a Kind";
-  if (groups[0] === 2 && groups[1] === 2) return "Two Pair";
-  if (groups[0] === 2) return "Pair";
-  return "High Card";
+function playSelected() {
+  const cards = selectedCards();
+  if (state.mode !== "playing" || !cards.length || state.hands < 1) return;
+
+  let scored = evaluateHand(cards);
+  state.jokers.forEach((joker) => {
+    if (joker.apply) scored = joker.apply(scored, cards);
+  });
+
+  const gained = scored.chips * scored.mult;
+  const bonusCash = state.jokers.reduce((sum, joker) => sum + (joker.payout ? joker.payout(scored, cards) : 0), 0);
+  state.score += gained;
+  state.cash += bonusCash;
+  state.hands -= 1;
+  removeSelected();
+  drawTo(8);
+
+  if (state.score >= state.target) {
+    openShop(`${scored.name}: ${scored.chips} x ${scored.mult} = ${gained}. Blind cleared.`);
+  } else if (state.hands === 0) {
+    state.mode = "gameover";
+    render(`${scored.name}: ${gained}. Run over. Target missed by ${state.target - state.score}.`);
+  } else {
+    render(`${scored.name}: ${scored.chips} x ${scored.mult} = ${gained}.`);
+  }
 }
 
-function multiplierFor(handName) {
+function discardSelected() {
+  if (state.mode !== "playing" || state.discards < 1 || state.selected.size === 0) return;
+  state.discards -= 1;
+  removeSelected();
+  drawTo(8);
+  render("Discarded. Build a stronger hand.");
+}
+
+function removeSelected() {
+  state.hand = state.hand.filter((card) => !state.selected.has(card.id));
+  state.selected.clear();
+}
+
+function selectedCards() {
+  return state.hand.filter((card) => state.selected.has(card.id));
+}
+
+function evaluateHand(cards) {
+  const values = cards.map((card) => card.value).sort((a, b) => a - b);
+  const counts = groupCounts(values);
+  const flush = cards.length >= 5 && new Set(cards.map((card) => card.suit)).size === 1;
+  const straight = cards.length >= 5 && isStraight(values);
+  const royal = straight && flush && Math.max(...values) === 14 && Math.min(...values) === 10;
+  const groups = Object.values(counts).sort((a, b) => b - a);
+  const name =
+    (royal && "Royal Flush") ||
+    (straight && flush && "Straight Flush") ||
+    (groups[0] === 4 && "Four of a Kind") ||
+    (groups[0] === 3 && groups[1] === 2 && "Full House") ||
+    (flush && "Flush") ||
+    (straight && "Straight") ||
+    (groups[0] === 3 && "Three of a Kind") ||
+    (groups[0] === 2 && groups[1] === 2 && "Two Pair") ||
+    (groups[0] === 2 && "Pair") ||
+    "High Card";
+  const [baseChips, mult] = handScores[name];
   return {
-    "Four of a Kind": 7,
-    "Full House": 5,
-    "Three of a Kind": 4,
-    "Two Pair": 3,
-    Pair: 2,
-    "High Card": 1,
-  }[handName];
+    name,
+    chips: baseChips + cards.reduce((sum, card) => sum + card.chips, 0),
+    mult,
+  };
 }
 
-function renderHand() {
-  cardsElement.replaceChildren(
-    ...currentHand.map((card) => {
-      const cardElement = document.createElement("article");
-      cardElement.className = `card ${card.color}`;
-      cardElement.innerHTML = `
-        <span class="rank">${card.rank}</span>
-        <span class="suit">${card.symbol}</span>
-      `;
-      return cardElement;
+function groupCounts(values) {
+  return values.reduce((counts, value) => {
+    counts[value] = (counts[value] || 0) + 1;
+    return counts;
+  }, {});
+}
+
+function isStraight(values) {
+  const unique = [...new Set(values)];
+  const wheel = unique.join(",") === "2,3,4,5,14";
+  return wheel || unique.length === 5 && unique[4] - unique[0] === 4;
+}
+
+function openShop(message) {
+  state.mode = "shop";
+  const reward = 3 + state.hands + state.ante;
+  state.cash += reward;
+  state.shop = shuffle(jokerPool.filter((joker) => !state.jokers.some((owned) => owned.name === joker.name))).slice(0, 3);
+  render(`${message} Reward: $${reward}.`);
+}
+
+function buyJoker(name) {
+  const joker = state.shop.find((item) => item.name === name);
+  if (!joker || state.cash < joker.cost || state.jokers.length >= 5) return;
+  state.cash -= joker.cost;
+  state.jokers.push(joker);
+  state.shop = state.shop.filter((item) => item.name !== name);
+  render(`${joker.name} added.`);
+}
+
+function nextRound() {
+  if (state.mode !== "shop") return;
+  state.round += 1;
+  state.ante = Math.ceil(state.round / 3);
+  state.target = Math.round(220 + state.round * 110 + state.ante * 80);
+  state.score = 0;
+  state.hands = 4;
+  state.discards = 3;
+  state.deck = shuffle(buildDeck());
+  state.hand = [];
+  state.selected.clear();
+  state.mode = "playing";
+  drawTo(8);
+  render("New blind. Find the score.");
+}
+
+function render(message = els.result.textContent) {
+  els.ante.textContent = state.ante;
+  els.round.textContent = state.round;
+  els.target.textContent = state.target;
+  els.score.textContent = state.score;
+  els.hands.textContent = state.hands;
+  els.discards.textContent = state.discards;
+  els.cash.textContent = `$${state.cash}`;
+  els.result.textContent = message;
+  els.shopPanel.hidden = state.mode !== "shop";
+  els.play.disabled = state.mode !== "playing" || state.selected.size === 0 || state.hands < 1;
+  els.discard.disabled = state.mode !== "playing" || state.selected.size === 0 || state.discards < 1;
+  renderCards();
+  renderJokers();
+  renderShop();
+}
+
+function renderCards() {
+  els.hand.replaceChildren(
+    ...state.hand.map((card) => {
+      const button = document.createElement("button");
+      button.className = `card ${card.color}`;
+      button.type = "button";
+      button.dataset.selected = state.selected.has(card.id);
+      button.setAttribute("aria-pressed", state.selected.has(card.id));
+      button.innerHTML = `<span>${card.label}</span><strong>${card.symbol}</strong>`;
+      button.addEventListener("click", () => toggleCard(card.id));
+      return button;
     }),
   );
 }
 
-dealButton.addEventListener("click", dealHand);
-scoreButton.addEventListener("click", scoreHand);
+function renderJokers() {
+  els.jokers.replaceChildren(...(state.jokers.length ? state.jokers.map(jokerView) : [emptyView("No jokers yet")]));
+}
 
-dealHand();
+function renderShop() {
+  els.shop.replaceChildren(...state.shop.map((joker) => {
+    const card = jokerView(joker);
+    const buy = document.createElement("button");
+    buy.type = "button";
+    buy.textContent = `Buy $${joker.cost}`;
+    buy.disabled = state.cash < joker.cost || state.jokers.length >= 5;
+    buy.addEventListener("click", () => buyJoker(joker.name));
+    card.append(buy);
+    return card;
+  }));
+}
+
+function jokerView(joker) {
+  const item = document.createElement("article");
+  item.className = "joker";
+  item.innerHTML = `<strong>${joker.name}</strong><span>${joker.text}</span>`;
+  return item;
+}
+
+function emptyView(text) {
+  const item = document.createElement("p");
+  item.className = "empty";
+  item.textContent = text;
+  return item;
+}
+
+els.play.addEventListener("click", playSelected);
+els.discard.addEventListener("click", discardSelected);
+els.nextRound.addEventListener("click", nextRound);
+els.newRun.addEventListener("click", newRun);
+
+newRun();

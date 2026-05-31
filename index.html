@@ -7,34 +7,48 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <main class="app-shell">
-      <section class="table" aria-label="Balatro project starter">
-        <div class="topbar">
-          <div>
-            <p class="eyebrow">Local prototype</p>
-            <h1>Balatro</h1>
-          </div>
-          <span class="version">v92.0</span>
+    <main class="game">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">Poker roguelite prototype</p>
+          <h1>Balatro</h1>
         </div>
+        <span class="version">v92.2</span>
+      </header>
 
-        <div class="scoreboard" aria-live="polite">
-          <div>
-            <span class="label">Hand</span>
-            <strong id="hand-name">High Card</strong>
-          </div>
-          <div>
-            <span class="label">Score</span>
-            <strong id="score">0</strong>
-          </div>
-        </div>
+      <section class="hud" aria-label="Run status">
+        <div><span>Ante</span><strong id="ante">1</strong></div>
+        <div><span>Round</span><strong id="round">1</strong></div>
+        <div><span>Target</span><strong id="target">300</strong></div>
+        <div><span>Score</span><strong id="score">0</strong></div>
+        <div><span>Hands</span><strong id="hands">4</strong></div>
+        <div><span>Discards</span><strong id="discards">3</strong></div>
+        <div><span>Cash</span><strong id="cash">$4</strong></div>
+      </section>
 
-        <div class="cards" id="cards" aria-label="Current hand"></div>
-
-        <div class="actions">
-          <button id="deal-button" type="button">Deal Hand</button>
-          <button id="score-button" type="button">Score</button>
+      <section class="table" aria-label="Card table">
+        <div class="result" id="result">Select up to five cards, then play or discard.</div>
+        <div class="hand" id="hand" aria-label="Cards in hand"></div>
+        <div class="controls">
+          <button id="play" type="button">▶ Play</button>
+          <button id="discard" type="button">↻ Discard</button>
+          <button id="new-run" type="button">⟲ New Run</button>
         </div>
       </section>
+
+      <aside class="side-panel" aria-label="Jokers and shop">
+        <section>
+          <h2>Jokers</h2>
+          <div class="jokers" id="jokers"></div>
+        </section>
+        <section class="shop" id="shop-panel" hidden>
+          <div class="shop-head">
+            <h2>Shop</h2>
+            <button id="next-round" type="button">→ Next Round</button>
+          </div>
+          <div class="shop-grid" id="shop"></div>
+        </section>
+      </aside>
     </main>
 
     <script src="app.js"></script>
