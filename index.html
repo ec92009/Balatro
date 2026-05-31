@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Balatro</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="table" aria-label="Balatro project starter">
+        <div class="topbar">
+          <div>
+            <p class="eyebrow">Local prototype</p>
+            <h1>Balatro</h1>
+          </div>
+          <span class="version">v92.0</span>
+        </div>
+
+        <div class="scoreboard" aria-live="polite">
+          <div>
+            <span class="label">Hand</span>
+            <strong id="hand-name">High Card</strong>
+          </div>
+          <div>
+            <span class="label">Score</span>
+            <strong id="score">0</strong>
+          </div>
+        </div>
+
+        <div class="cards" id="cards" aria-label="Current hand"></div>
+
+        <div class="actions">
+          <button id="deal-button" type="button">Deal Hand</button>
+          <button id="score-button" type="button">Score</button>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
