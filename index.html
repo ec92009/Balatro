@@ -13,13 +13,16 @@
           <p class="eyebrow">Poker roguelite prototype</p>
           <h1>Balatro</h1>
         </div>
-        <span class="version">v92.2</span>
+        <div class="masthead-actions">
+          <button id="rules" type="button">? Rules</button>
+          <span class="version">v92.3</span>
+        </div>
       </header>
 
       <section class="hud" aria-label="Run status">
         <div><span>Ante</span><strong id="ante">1</strong></div>
         <div><span>Round</span><strong id="round">1</strong></div>
-        <div><span>Target</span><strong id="target">300</strong></div>
+        <div><span>Target</span><strong id="target">240</strong></div>
         <div><span>Score</span><strong id="score">0</strong></div>
         <div><span>Hands</span><strong id="hands">4</strong></div>
         <div><span>Discards</span><strong id="discards">3</strong></div>
@@ -49,6 +52,20 @@
           <div class="shop-grid" id="shop"></div>
         </section>
       </aside>
+
+      <section class="overlay" id="tutorial" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+        <div class="tutorial-panel">
+          <p class="eyebrow" id="tutorial-step">Tutorial</p>
+          <h2 id="tutorial-title">Clear the blind</h2>
+          <p id="tutorial-copy"></p>
+          <ul id="tutorial-list"></ul>
+          <div class="tutorial-actions">
+            <button id="tutorial-back" type="button">← Back</button>
+            <button id="tutorial-next" type="button">Next →</button>
+            <button id="tutorial-start" type="button">Start Playing</button>
+          </div>
+        </div>
+      </section>
     </main>
 
     <script src="app.js"></script>

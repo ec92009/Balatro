@@ -43,6 +43,29 @@ const jokerPool = [
   { name: "Lucky Seven", cost: 3, text: "+77 chips if a 7 is scored", apply: (score, cards) => (cards.some((card) => card.value === 7) ? { ...score, chips: score.chips + 77 } : score) },
 ];
 
+const tutorialSteps = [
+  {
+    title: "Clear the blind",
+    copy: "Your goal is to reach the target score before you run out of hands.",
+    bullets: ["Each round starts with 4 hands and 3 discards.", "Select up to 5 cards, then play them for chips x mult.", "If your score reaches the target, the shop opens."],
+  },
+  {
+    title: "Build poker hands",
+    copy: "Better poker hands start with stronger base chips and multipliers.",
+    bullets: ["Pairs are useful early.", "Straights, flushes, full houses, and four of a kind score much higher.", "Card ranks add chips on top of the hand bonus."],
+  },
+  {
+    title: "Use discards",
+    copy: "Discards let you throw away selected cards and draw back to eight.",
+    bullets: ["Discard weak singles to chase pairs or flushes.", "Discards are limited, so keep made hands.", "Cards refill automatically after each play or discard."],
+  },
+  {
+    title: "Buy jokers",
+    copy: "After clearing a blind, spend cash on jokers before the next round.",
+    bullets: ["Jokers modify chips, mult, or rewards.", "You can hold up to 5 jokers.", "Targets rise each round, so upgrades matter."],
+  },
+];
+
 const els = {
   ante: document.querySelector("#ante"),
   round: document.querySelector("#round"),
@@ -60,9 +83,19 @@ const els = {
   discard: document.querySelector("#discard"),
   nextRound: document.querySelector("#next-round"),
   newRun: document.querySelector("#new-run"),
+  rules: document.querySelector("#rules"),
+  tutorial: document.querySelector("#tutorial"),
+  tutorialStep: document.querySelector("#tutorial-step"),
+  tutorialTitle: document.querySelector("#tutorial-title"),
+  tutorialCopy: document.querySelector("#tutorial-copy"),
+  tutorialList: document.querySelector("#tutorial-list"),
+  tutorialBack: document.querySelector("#tutorial-back"),
+  tutorialNext: document.querySelector("#tutorial-next"),
+  tutorialStart: document.querySelector("#tutorial-start"),
 };
 
 let state;
+let tutorialIndex = 0;
 
 function newRun() {
   state = {
@@ -78,10 +111,11 @@ function newRun() {
     selected: new Set(),
     jokers: [],
     shop: [],
-    mode: "playing",
+    mode: "intro",
   };
   drawTo(8);
-  render("Select up to five cards, then play or discard.");
+  tutorialIndex = 0;
+  render("Read the quick tutorial, then start the blind.");
 }
 
 function buildDeck() {
@@ -237,6 +271,25 @@ function nextRound() {
   render("New blind. Find the score.");
 }
 
+function openRules() {
+  tutorialIndex = 0;
+  els.tutorial.hidden = false;
+  renderTutorial();
+}
+
+function closeTutorial() {
+  els.tutorial.hidden = true;
+  if (state.mode === "intro") {
+    state.mode = "playing";
+    render("Select up to five cards, then play or discard.");
+  }
+}
+
+function changeTutorialStep(delta) {
+  tutorialIndex = Math.max(0, Math.min(tutorialSteps.length - 1, tutorialIndex + delta));
+  renderTutorial();
+}
+
 function render(message = els.result.textContent) {
   els.ante.textContent = state.ante;
   els.round.textContent = state.round;
@@ -249,9 +302,27 @@ function render(message = els.result.textContent) {
   els.shopPanel.hidden = state.mode !== "shop";
   els.play.disabled = state.mode !== "playing" || state.selected.size === 0 || state.hands < 1;
   els.discard.disabled = state.mode !== "playing" || state.selected.size === 0 || state.discards < 1;
+  els.tutorial.hidden = state.mode !== "intro" && els.tutorial.hidden;
   renderCards();
   renderJokers();
   renderShop();
+  renderTutorial();
+}
+
+function renderTutorial() {
+  if (els.tutorial.hidden) return;
+  const step = tutorialSteps[tutorialIndex];
+  els.tutorialStep.textContent = `Tutorial ${tutorialIndex + 1} of ${tutorialSteps.length}`;
+  els.tutorialTitle.textContent = step.title;
+  els.tutorialCopy.textContent = step.copy;
+  els.tutorialList.replaceChildren(...step.bullets.map((text) => {
+    const item = document.createElement("li");
+    item.textContent = text;
+    return item;
+  }));
+  els.tutorialBack.disabled = tutorialIndex === 0;
+  els.tutorialNext.hidden = tutorialIndex === tutorialSteps.length - 1;
+  els.tutorialStart.hidden = tutorialIndex !== tutorialSteps.length - 1;
 }
 
 function renderCards() {
@@ -304,5 +375,9 @@ els.play.addEventListener("click", playSelected);
 els.discard.addEventListener("click", discardSelected);
 els.nextRound.addEventListener("click", nextRound);
 els.newRun.addEventListener("click", newRun);
+els.rules.addEventListener("click", openRules);
+els.tutorialBack.addEventListener("click", () => changeTutorialStep(-1));
+els.tutorialNext.addEventListener("click", () => changeTutorialStep(1));
+els.tutorialStart.addEventListener("click", closeTutorial);
 
 newRun();

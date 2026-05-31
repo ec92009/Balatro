@@ -26,6 +26,7 @@ http://localhost:8000/
 ## Current Game
 
 - Select up to five cards from an eight-card hand.
+- Start with an intro tutorial and reopen the rules any time.
 - Play scored poker hands to clear each round target.
 - Use limited discards to redraw weak cards.
 - Earn cash, buy original joker modifiers, and advance to harder rounds.
