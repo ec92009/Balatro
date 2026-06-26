@@ -12,6 +12,6 @@ Project-level working preferences for `/Users/ecohen/Dev/Balatro`.
 
 ## Workflow
 
-- Use visible app versions in the form `vX.Y` when changing the app UI.
+- Follow `~/Dev/.SOPs/VERSIONING_SOP.md` when a versioned release is required.
 - Run a local preview with `python3 -m http.server 8000` from this project root unless another server is already active.
 - Verify user-facing changes in a browser when practical.
