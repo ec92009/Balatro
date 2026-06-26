@@ -12,12 +12,6 @@ Project-level working preferences for `/Users/ecohen/Dev/Balatro`.
 
 ## Workflow
 
-- Prefer small, direct edits.
 - Use visible app versions in the form `vX.Y` when changing the app UI.
 - Run a local preview with `python3 -m http.server 8000` from this project root unless another server is already active.
 - Verify user-facing changes in a browser when practical.
-
-## Safety
-
-- Keep secrets out of source files.
-- Do not delete or overwrite user files without explicit confirmation.
